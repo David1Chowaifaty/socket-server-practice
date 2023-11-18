@@ -1,16 +1,21 @@
 import express from 'express';
 import http from 'http';
-import { Server } from 'socket.io';
 import cors from 'cors';
-
+import { Server } from 'socket.io';
 
 const app = express();
-app.use(cors());
-const server = http.createServer(app); // Create HTTP server for Express
-const io = new Server(server); // Attach Socket.IO to the server
+const server = http.createServer(app);
 
-// Middleware to parse JSON bodies
+app.use(cors());
+
 app.use(express.json());
+
+
+const io = new Server(server, {
+    cors: {
+        origin: "*",
+    }
+});
 
 app.get('/', (req, res) => {
     res.send('<h1>Hello World</h1>');
@@ -24,11 +29,13 @@ io.on('connection', (socket) => {
 });
 
 const users = [];
-
+app.get("/get-users", (req, res) => {
+    res.send(users)
+})
 app.post('/add-user', (req, res) => {
     const user = req.body;
     users.push(user);
-    console.log(users)
+    console.log(users);
     io.emit('new-user', user); // Emit new user info to all connected Socket.IO clients
     res.status(201).send(user);
 });
